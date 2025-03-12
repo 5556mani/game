@@ -1,0 +1,83 @@
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+
+const generateRandomSequence = () => {
+  return Array.from({ length: 26 }, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+};
+
+export default function PigeonholeGame() {
+  const [numbers, setNumbers] = useState(generateRandomSequence);
+  const [revealSequence, setRevealSequence] = useState(null);
+  const [shuffling, setShuffling] = useState(false);
+
+  const shuffleNumbers = () => {
+    setShuffling(true);
+    setTimeout(() => {
+      setNumbers(generateRandomSequence());
+      setShuffling(false);
+    }, 1000);
+  };
+
+  const revealPattern = () => {
+    const foundSequence = findPigeonholeSequence(numbers);
+    setRevealSequence(foundSequence);
+  };
+
+  const findPigeonholeSequence = (arr) => {
+    let subseq = [];
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = i + 1; j < arr.length; j++) {
+        if (arr[j] > arr[i]) {
+          subseq.push(arr[i], arr[j]);
+          if (subseq.length >= 6) return subseq;
+        }
+      }
+      subseq = [];
+    }
+    return null;
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
+      <div className="grid grid-cols-6 md:grid-cols-13 gap-2">
+        {numbers.map((num, index) => (
+          <motion.div
+            key={num}
+            animate={{ x: shuffling ? Math.random() * 50 - 25 : 0, y: shuffling ? Math.random() * 50 - 25 : 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-blue-500 text-white text-xl font-bold p-4 rounded-lg shadow-md"
+          >
+            {num}
+          </motion.div>
+        ))}
+      </div>
+      <div className="mt-6 flex gap-4">
+        <Button onClick={shuffleNumbers} className="bg-green-500">Shuffle</Button>
+        {revealSequence ? (
+          <Button onClick={() => setRevealSequence(null)} className="bg-red-500">Reset</Button>
+        ) : (
+          <Button onClick={revealPattern} className="bg-yellow-500">Reveal</Button>
+        )}
+      </div>
+      {revealSequence && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="mt-6">
+          <h2 className="text-white text-2xl mb-4">Sequence Found:</h2>
+          <div className="flex gap-4">
+            {revealSequence.map((num, index) => (
+              <motion.div
+                key={index}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="bg-yellow-500 text-black text-xl font-bold p-4 rounded-lg shadow-lg"
+              >
+                {num}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+}
